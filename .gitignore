@@ -1,0 +1,10 @@
+# Java portable local
+jre/
+*.zip
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.system_generated/
