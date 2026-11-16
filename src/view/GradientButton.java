@@ -13,12 +13,16 @@ import javax.swing.Timer;
 
 public class GradientButton extends JButton implements ActionListener {
 	private static final int ANIMATION_DELAY_MS = 15;
-	private static final int ANIMATION_STEP_PX = 20;
+	private static final double ANIMATION_DURATION_MS = 300.0;
 
 	private JDmainMenu jDmainMenu;
 	private Timer animationTimer;
 	private boolean isExpanding;
 	private int currentWidth;
+	private int startWidth;
+	private int targetWidth;
+	private long animationStartNanos;
+	private long animationDurationNanos;
 
 	private Color color1 = Color.black;
 	private Color color2 = Color.white;
@@ -56,9 +60,15 @@ public class GradientButton extends JButton implements ActionListener {
 		isExpanding = !isExpanding;
 		updateMenuLocation();
 
+		startWidth = currentWidth;
+		targetWidth = isExpanding ? JDmainMenu.MENU_WIDTH : 0;
+		int distance = Math.abs(targetWidth - startWidth);
+		animationDurationNanos = Math.max(1L,
+				(long) ((distance / (double) JDmainMenu.MENU_WIDTH) * ANIMATION_DURATION_MS * 1_000_000L));
+		animationStartNanos = System.nanoTime();
+
 		if (isExpanding && !jDmainMenu.isVisible()) {
-			currentWidth = Math.max(currentWidth, ANIMATION_STEP_PX);
-			jDmainMenu.setWidth(currentWidth);
+			jDmainMenu.setWidth(Math.max(1, currentWidth));
 			jDmainMenu.setVisible(true);
 		}
 
@@ -70,22 +80,25 @@ public class GradientButton extends JButton implements ActionListener {
 	private void stepAnimation() {
 		updateMenuLocation();
 
-		if (isExpanding) {
-			currentWidth = Math.min(JDmainMenu.MENU_WIDTH, currentWidth + ANIMATION_STEP_PX);
-			jDmainMenu.setWidth(currentWidth);
-			if (currentWidth >= JDmainMenu.MENU_WIDTH) {
-				animationTimer.stop();
-			}
-		} else {
-			currentWidth = Math.max(0, currentWidth - ANIMATION_STEP_PX);
+		double progress = (System.nanoTime() - animationStartNanos) / (double) animationDurationNanos;
+		double t = Math.min(1.0, Math.max(0.0, progress));
+		double eased = 1.0 - Math.pow(1.0 - t, 3);
+
+		currentWidth = (int) Math.round(startWidth + (targetWidth - startWidth) * eased);
+
+		if (t >= 1.0) {
+			currentWidth = targetWidth;
+			animationTimer.stop();
 			if (currentWidth == 0) {
-				animationTimer.stop();
 				jDmainMenu.setVisible(false);
 				jDmainMenu.setWidth(0);
 			} else {
 				jDmainMenu.setWidth(currentWidth);
 			}
+			return;
 		}
+
+		jDmainMenu.setWidth(Math.max(1, currentWidth));
 	}
 
 	private void updateMenuLocation() {
