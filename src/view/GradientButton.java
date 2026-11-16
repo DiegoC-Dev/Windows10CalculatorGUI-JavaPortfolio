@@ -13,7 +13,7 @@ import javax.swing.Timer;
 
 public class GradientButton extends JButton implements ActionListener {
 	private static final int ANIMATION_DELAY_MS = 15;
-	private static final double ANIMATION_DURATION_MS = 300.0;
+	private static final double ANIMATION_DURATION_MS = 1000.0;
 
 	private JDmainMenu jDmainMenu;
 	private Timer animationTimer;
@@ -82,9 +82,8 @@ public class GradientButton extends JButton implements ActionListener {
 
 		double progress = (System.nanoTime() - animationStartNanos) / (double) animationDurationNanos;
 		double t = Math.min(1.0, Math.max(0.0, progress));
-		double eased = 1.0 - Math.pow(1.0 - t, 3);
 
-		currentWidth = (int) Math.round(startWidth + (targetWidth - startWidth) * eased);
+		currentWidth = (int) Math.round(startWidth + (targetWidth - startWidth) * t);
 
 		if (t >= 1.0) {
 			currentWidth = targetWidth;
