@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Windows 10 Calculator GUI</title>
     <!-- CheerpJ WebAssembly Loader -->
-    <script src="https://cjrtnc.leaningtech.com/3.1/loader.js"></script>
+    <script src="https://cjrtnc.leaningtech.com/3.0/cj3loader.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -46,7 +46,10 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        #cheerpjDisplay {
+        #calc-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
             border-radius: 8px;
             overflow: hidden;
@@ -58,19 +61,20 @@
         <div class="spinner"></div>
         <p>Iniciando Java en el navegador...</p>
     </div>
+    <div id="calc-wrapper"></div>
 
-    <script type="module">
+    <script>
         async function run() {
             try {
                 await cheerpjInit();
-                cheerpjCreateDisplay(-1, -1, document.body);
+                cheerpjCreateDisplay(360, 560, document.getElementById('calc-wrapper'));
                 const loading = document.getElementById('loading');
                 if (loading) loading.style.display = 'none';
                 await cheerpjRunJar("/app/Windows10Calculator.jar");
             } catch (err) {
                 console.error("Error al iniciar CheerpJ:", err);
                 const loading = document.getElementById('loading');
-                if (loading) loading.innerHTML = '<p style="color: #ff5555;">Error al cargar Java WebAssembly.</p>';
+                if (loading) loading.innerHTML = '<p style="color: #ff5555;">Error al cargar Java WebAssembly: ' + (err.message || err) + '</p>';
             }
         }
         run();
