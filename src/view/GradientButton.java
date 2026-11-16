@@ -1,143 +1,106 @@
 package view;
 
 import java.awt.Color;
-import java.awt.GradientPaint;
+import java.awt.Container;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseListener;
-import java.awt.geom.Point2D;
 
 import javax.swing.JButton;
-import javax.swing.JDialog;
+import javax.swing.Timer;
 
-import org.w3c.dom.events.MouseEvent;
+public class GradientButton extends JButton implements ActionListener {
+	private static final int ANIMATION_DELAY_MS = 15;
+	private static final int ANIMATION_STEP_PX = 20;
 
-public class GradientButton extends JButton implements ActionListener ,MouseListener{
 	private JDmainMenu jDmainMenu;
-	private int clicks;
-	private Point location;
-	public GradientButton() {
-		clicks = 1;
-		setBackground(Color.black);
-	 	this.addActionListener(this);
-//	 	reposition();
-	 	location = getLocation();
-	 	jDmainMenu = new JDmainMenu(0, 0);
-//	 	jDmainMenu = new JDmainMenu(getX(), getY());
-	}
+	private Timer animationTimer;
+	private boolean isExpanding;
+	private int currentWidth;
+
 	private Color color1 = Color.black;
 	private Color color2 = Color.white;
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        Graphics2D g2 = (Graphics2D) g.create();
-        for (int i = 0; i < 11; i++) {
-        	g2.setColor(i==3 || i==4 || i==7 || i==8?color1:color2);
-        	g2.drawLine(0, i, getWidth(), i);
+	public GradientButton() {
+		setBackground(Color.black);
+		setFocusPainted(false);
+		this.addActionListener(this);
+
+		jDmainMenu = new JDmainMenu(0, 0);
+		isExpanding = false;
+		currentWidth = 0;
+
+		animationTimer = new Timer(ANIMATION_DELAY_MS, new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				stepAnimation();
+			}
+		});
+	}
+
+	@Override
+	protected void paintComponent(Graphics g) {
+		Graphics2D g2 = (Graphics2D) g.create();
+		for (int i = 0; i < 11; i++) {
+			g2.setColor(i == 3 || i == 4 || i == 7 || i == 8 ? color1 : color2);
+			g2.drawLine(0, i, getWidth(), i);
 		}
-        g2.drawLine(0, 11, getWidth(), 11);
-    }
+		g2.drawLine(0, 11, getWidth(), 11);
+		g2.dispose();
+	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		clicks=clicks+1;
-//		updateLocation();
-		jDmainMenu.setVisible(true);
-		try {
-			if(clicks%2==0) {
-				for (int i = 0; i < 220; i++) {
-					jDmainMenu.setX(location.x);
-					jDmainMenu.setY(location.y);
-					Thread.sleep(6);
-					jDmainMenu.setWidth(i);
-				}	
-			}
-			if(clicks%2!=0) {
-				for (int i = 220; i > 0; i--) {
-					jDmainMenu.setX(location.x);
-					jDmainMenu.setY(location.y);
-					Thread.sleep(5);
-					jDmainMenu.setWidth(i);
-				}
-			}
-//			System.out.println("asdad");
-//			jFmainFrame.setHeight(200);
-		} catch (InterruptedException ex) {
-			// TODO Auto-generated catch block
-			ex.printStackTrace();
+		isExpanding = !isExpanding;
+		updateMenuLocation();
+
+		if (isExpanding && !jDmainMenu.isVisible()) {
+			currentWidth = Math.max(currentWidth, ANIMATION_STEP_PX);
+			jDmainMenu.setWidth(currentWidth);
+			jDmainMenu.setVisible(true);
+		}
+
+		if (!animationTimer.isRunning()) {
+			animationTimer.start();
 		}
 	}
-	private void updateLocation(){
-//		location = getLocationOnScreen();
-//		location = sendCoordinates(point2d);
-		jDmainMenu.setX(location.x);
-		jDmainMenu.setY(location.y);
+
+	private void stepAnimation() {
+		updateMenuLocation();
+
+		if (isExpanding) {
+			currentWidth = Math.min(JDmainMenu.MENU_WIDTH, currentWidth + ANIMATION_STEP_PX);
+			jDmainMenu.setWidth(currentWidth);
+			if (currentWidth >= JDmainMenu.MENU_WIDTH) {
+				animationTimer.stop();
+			}
+		} else {
+			currentWidth = Math.max(0, currentWidth - ANIMATION_STEP_PX);
+			if (currentWidth == 0) {
+				animationTimer.stop();
+				jDmainMenu.setVisible(false);
+				jDmainMenu.setWidth(0);
+			} else {
+				jDmainMenu.setWidth(currentWidth);
+			}
+		}
 	}
-//	private void reposition() {
-//		Thread thread = new Thread(new Runnable() {
-//			boolean init  = true;
-//			int cont =0;
-//			@Override
-//			public void run() {
-//				while (init==true) {
-//					repaint();
-//					jDmainMenu = new JDmainMenu(getX(), getY());
-//				}
-////				System.out.println(cont);
-//////				updateLocation();
-////					if(visivility ==true) {
-////						jDmainMenu.setSize(cont, 400);
-////						cont= cont +1;					
-////					}
-////				}
-//			}
-//		});
-//		thread.start();
-//	}
-	public void changeLanguage(){
+
+	private void updateMenuLocation() {
+		Container parent = getParent();
+		if (parent != null && parent.isShowing()) {
+			Point parentOnScreen = parent.getLocationOnScreen();
+			jDmainMenu.setMenuLocation(parentOnScreen.x, parentOnScreen.y + parent.getHeight());
+		}
+	}
+
+	public void changeLanguage() {
 		jDmainMenu.changeLanguage();
 	}
+
 	public void sendCoordinates(Point point2d) {
-//		standartButton.sendCoordinates(point2d);
-		location=point2d;
-		jDmainMenu.setX(location.x);
-		jDmainMenu.setY(location.y);
-//		System.out.println("sdf");
-		
-//		return point2d;
-	}
-
-	@Override
-	public void mouseClicked(java.awt.event.MouseEvent e) {
-		System.out.println("1");
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void mousePressed(java.awt.event.MouseEvent e) {
-		System.out.println("2");
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void mouseReleased(java.awt.event.MouseEvent e) {
-		// TODO Auto-generated method stub
-		System.out.println("3");
-	}
-
-	@Override
-	public void mouseEntered(java.awt.event.MouseEvent e) {
-		// TODO Auto-generated method stub
-		System.out.println("4");
-	}
-
-	@Override
-	public void mouseExited(java.awt.event.MouseEvent e) {
-		// TODO Auto-generated method stub
-		System.out.println("5");
+		updateMenuLocation();
 	}
 }
